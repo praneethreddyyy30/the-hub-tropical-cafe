@@ -10,7 +10,7 @@ const getBaseUrl = () => {
   if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
     return 'http://localhost:8080/api';
   }
-  return `${origin}/api`;
+  return 'https://the-hub-tropical-cafe.onrender.com/api';
 };
 
 export const AuthProvider = ({ children }) => {

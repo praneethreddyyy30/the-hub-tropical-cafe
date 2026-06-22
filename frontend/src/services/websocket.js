@@ -11,7 +11,7 @@ const getWsUrl = () => {
   if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
     return 'http://localhost:8080/ws';
   }
-  return `${origin}/ws`;
+  return 'https://the-hub-tropical-cafe.onrender.com/ws';
 };
 
 export const connectWebSocket = (onConnectCallback, onErrorCallback) => {

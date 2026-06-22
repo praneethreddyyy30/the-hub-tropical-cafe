@@ -38,11 +38,13 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(admin);
             System.out.println(">>> Database seeded: Admin user created.");
-        } else if (envAdminPassword != null && !envAdminPassword.isBlank()) {
-            // Update password on restart if environment variable is explicitly set
-            admin.setPassword(passwordEncoder.encode(envAdminPassword));
-            userRepository.save(admin);
-            System.out.println(">>> Database updated: Admin password updated from environment variable.");
+        } else {
+            // Always ensure stored password matches targetPassword (env or default admin123)
+            if (!passwordEncoder.matches(targetPassword, admin.getPassword())) {
+                admin.setPassword(passwordEncoder.encode(targetPassword));
+                userRepository.save(admin);
+                System.out.println(">>> Database updated: Admin password reset/updated to match targetPassword.");
+            }
         }
 
         // 2. Seed System Settings
