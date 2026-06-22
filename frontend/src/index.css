@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-cafe-cream: #F4F0E6;
+  --color-cafe-gold: #D97706;
+  --color-cafe-darkgold: #B45309;
+  --color-cafe-wood: #059669;
+  --color-cafe-charcoal: #091A14;
+  --color-cafe-chocolate: #042E1F;
+  --color-cafe-accent: #F97316;
+  
+  --font-sans: "Outfit", "Inter", sans-serif;
+  --font-serif: "Playfair Display", "Georgia", serif;
+  
+  --animate-spin-slow: spin 12s linear infinite;
+  --animate-bounce-subtle: bounce 2s ease-in-out infinite;
+}
+
+@layer base {
+  body {
+    @apply bg-cafe-cream text-cafe-chocolate font-sans transition-colors duration-300 min-h-screen overflow-x-hidden;
+  }
+  
+  body.dark {
+    @apply bg-cafe-charcoal text-cafe-cream;
+  }
+  
+  #root {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    text-align: left !important;
+    border: none !important;
+    min-height: 100vh !important;
+    display: block !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Glassmorphism Styles */
+.glass-nav {
+  background: rgba(250, 246, 238, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(197, 168, 128, 0.2);
+}
+
+.dark .glass-nav {
+  background: rgba(26, 22, 19, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.dark .glass-panel {
+  background: rgba(26, 22, 19, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(163, 127, 85, 0.08);
+}
+
+.dark .glass-card {
+  background: rgba(43, 30, 23, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Custom premium scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-cafe-gold/40 rounded-full hover:bg-cafe-gold/60 transition-colors;
+}
+
+/* Waitroom Game Flipping Animation */
+.game-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+.game-card-flipped {
+  transform: rotateY(180deg);
+}
+.game-card-front, .game-card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.game-card-back {
+  transform: rotateY(180deg);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
