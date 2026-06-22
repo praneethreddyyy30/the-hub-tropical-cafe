@@ -42,6 +42,7 @@ export default function AdminDashboard() {
   const [orderFilterStatus, setOrderFilterStatus] = useState('ALL');
   const [activeOnly, setActiveOnly] = useState(true);
   const [todayOnly, setTodayOnly] = useState(true);
+  const [overviewTimeframe, setOverviewTimeframe] = useState('ALL');
   const [menuQuery, setMenuQuery] = useState('');
   const [feedbackQuery, setFeedbackQuery] = useState('');
   const [feedbackFilterRating, setFeedbackFilterRating] = useState('ALL');
@@ -133,6 +134,76 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  // Recalculate overview metrics dynamically in frontend based on selected timeframe
+  useEffect(() => {
+    if (!ordersList || ordersList.length === 0) return;
+
+    const now = new Date();
+    // Start of today (local time)
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Start of this week (last 7 days)
+    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    // Start of this month (last 30 days)
+    const monthStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const filtered = ordersList.filter(o => {
+      if (!o.createdAt) return false;
+      const orderDate = parseBackendDate(o.createdAt);
+      if (!orderDate) return false;
+
+      if (overviewTimeframe === 'TODAY') {
+        return orderDate >= todayStart;
+      } else if (overviewTimeframe === 'WEEK') {
+        return orderDate >= weekStart;
+      } else if (overviewTimeframe === 'MONTH') {
+        return orderDate >= monthStart;
+      }
+      return true; // 'ALL'
+    });
+
+    let totalRevenue = 0;
+    let pendingCount = 0;
+    let completedCount = 0;
+    const itemQtyMap = {};
+
+    filtered.forEach(o => {
+      if (o.status !== 'SERVED' && o.status !== 'CANCELLED') {
+        pendingCount++;
+      }
+      if (o.status === 'SERVED') {
+        completedCount++;
+      }
+      if (o.paymentStatus && ['COMPLETED', 'PAID'].includes(o.paymentStatus.toUpperCase())) {
+        totalRevenue += o.totalPrice || 0;
+      }
+
+      if (o.orderItems) {
+        o.orderItems.forEach(item => {
+          if (item.menuItem && item.menuItem.name) {
+            const name = item.menuItem.name;
+            itemQtyMap[name] = (itemQtyMap[name] || 0) + (item.quantity || 0);
+          }
+        });
+      }
+    });
+
+    const popularItems = Object.keys(itemQtyMap).map(name => ({
+      itemName: name,
+      totalQty: itemQtyMap[name]
+    })).sort((a, b) => b.totalQty - a.totalQty);
+
+    setOverviewMetrics({
+      totalOrders: filtered.length,
+      pendingOrders: pendingCount,
+      completedOrders: completedCount,
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      popularItems: popularItems.slice(0, 5),
+      recentOrders: filtered.slice(0, 5)
+    });
+  }, [ordersList, overviewTimeframe]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -519,9 +590,24 @@ export default function AdminDashboard() {
                ========================================================== */}
             {activeTab === 'overview' && (
               <div className="space-y-8">
-                <div>
-                  <h2 className="font-serif text-2xl md:text-3xl font-bold dark:text-white mb-1.5">Dashboard Overview</h2>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Real-time café operations and financial metrics.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h2 className="font-serif text-2xl md:text-3xl font-bold dark:text-white mb-1.5">Dashboard Overview</h2>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Real-time café operations and financial metrics.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Timeframe:</span>
+                    <select
+                      value={overviewTimeframe}
+                      onChange={(e) => setOverviewTimeframe(e.target.value)}
+                      className="px-3 py-2 bg-white dark:bg-cafe-chocolate/20 border border-cafe-gold/25 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none"
+                    >
+                      <option value="TODAY" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Today</option>
+                      <option value="WEEK" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">This Week (7d)</option>
+                      <option value="MONTH" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">This Month (30d)</option>
+                      <option value="ALL" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Lifetime</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Metrics Grid */}
@@ -654,11 +740,11 @@ export default function AdminDashboard() {
                       onChange={(e) => setOrderFilterStatus(e.target.value)}
                       className="px-3 py-2 bg-white dark:bg-cafe-chocolate/20 border border-cafe-gold/25 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none"
                     >
-                      <option value="ALL">All Statuses</option>
-                      <option value="RECEIVED">Received</option>
-                      <option value="PREPARING">Preparing</option>
-                      <option value="READY">Ready</option>
-                      <option value="SERVED">Served</option>
+                      <option value="ALL" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">All Statuses</option>
+                      <option value="RECEIVED" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Received</option>
+                      <option value="PREPARING" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Preparing</option>
+                      <option value="READY" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Ready</option>
+                      <option value="SERVED" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Served</option>
                     </select>
 
                     <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 font-semibold cursor-pointer select-none border border-cafe-gold/25 px-3 py-2 rounded-xl bg-white dark:bg-cafe-chocolate/20">
@@ -1062,12 +1148,12 @@ export default function AdminDashboard() {
                       onChange={(e) => setFeedbackFilterRating(e.target.value)}
                       className="px-3 py-2 bg-white dark:bg-cafe-chocolate/20 border border-cafe-gold/25 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none"
                     >
-                      <option value="ALL">All Ratings</option>
-                      <option value="5">5 Stars</option>
-                      <option value="4">4 Stars</option>
-                      <option value="3">3 Stars</option>
-                      <option value="2">2 Stars</option>
-                      <option value="1">1 Star</option>
+                      <option value="ALL" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">All Ratings</option>
+                      <option value="5" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">5 Stars</option>
+                      <option value="4" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">4 Stars</option>
+                      <option value="3" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">3 Stars</option>
+                      <option value="2" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">2 Stars</option>
+                      <option value="1" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">1 Star</option>
                     </select>
                   </div>
                 </div>
@@ -1431,11 +1517,11 @@ export default function AdminDashboard() {
                     onChange={(e) => setMenuForm({...menuForm, category: e.target.value})}
                     className="w-full px-3 py-2 border border-cafe-gold/25 bg-white dark:bg-cafe-charcoal rounded-xl text-gray-800 dark:text-white focus:outline-none"
                   >
-                    <option value="Coffee">Coffee</option>
-                    <option value="Tea">Tea</option>
-                    <option value="Snacks">Snacks</option>
-                    <option value="Desserts">Desserts</option>
-                    <option value="Combos">Combos</option>
+                    <option value="Coffee" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Coffee</option>
+                    <option value="Tea" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Tea</option>
+                    <option value="Snacks" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Snacks</option>
+                    <option value="Desserts" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Desserts</option>
+                    <option value="Combos" className="bg-white dark:bg-cafe-charcoal text-gray-800 dark:text-white">Combos</option>
                   </select>
                 </div>
                 <div>
