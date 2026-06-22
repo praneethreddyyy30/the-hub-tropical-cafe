@@ -37,6 +37,13 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
+    // Public API: Update payment status (e.g. UPI verify checkout)
+    @PutMapping("/orders/{id}/payment-status")
+    public ResponseEntity<Order> updatePaymentStatus(@PathVariable Long id, @RequestParam String status) {
+        Order updatedOrder = orderService.updatePaymentStatus(id, status);
+        return ResponseEntity.ok(updatedOrder);
+    }
+
     // Admin API: Get all orders
     @GetMapping("/admin/orders")
     public ResponseEntity<List<Order>> getAllOrders() {

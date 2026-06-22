@@ -149,6 +149,26 @@ public class OrderService {
         return updatedOrder;
     }
 
+    @Transactional
+    public Order updatePaymentStatus(Long orderId, String paymentStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+
+        order.setPaymentStatus(paymentStatus);
+        Order updatedOrder = orderRepository.save(order);
+
+        // Broadcast to customer tracking page
+        messagingTemplate.convertAndSend("/topic/order/" + orderId, updatedOrder);
+        
+        // Broadcast update to Admin dashboard
+        messagingTemplate.convertAndSend("/topic/orders", updatedOrder);
+
+        // Sync updated details with Google Sheets
+        googleSheetsService.syncOrder(updatedOrder);
+
+        return updatedOrder;
+    }
+
     public List<Order> getAllOrders() {
         return orderRepository.findAllByOrderByCreatedAtDesc();
     }

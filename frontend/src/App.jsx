@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { getSavedOrderIds } from './utils/dateUtils';
 import { 
   Coffee, Gamepad2, Compass, MessageSquare, ClipboardList, 
   Settings, Sun, Moon, Sparkles 
@@ -34,12 +35,8 @@ function AppLayout() {
 
   useEffect(() => {
     const loadOrders = () => {
-      try {
-        const orders = JSON.parse(localStorage.getItem('cafe_placed_orders') || '[]');
-        setPlacedOrders(orders);
-      } catch (err) {
-        console.error('Error reading placed orders:', err);
-      }
+      const orders = getSavedOrderIds();
+      setPlacedOrders(orders);
     };
 
     loadOrders();

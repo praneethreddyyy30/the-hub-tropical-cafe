@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { connectWebSocket, subscribeToOrder, disconnectWebSocket } from '../services/websocket';
-import { parseBackendDate, formatLocalDateTime } from '../utils/dateUtils';
+import { parseBackendDate, formatLocalDateTime, getSavedOrderIds } from '../utils/dateUtils';
+import { playCustomerStatusAlert, playPaymentReceivedSound } from '../utils/soundUtils';
 
 export default function OrderTrackingPage() {
   const [searchParams] = useSearchParams();
@@ -28,6 +29,57 @@ export default function OrderTrackingPage() {
   // History / List state (when orderIdParam is not provided)
   const [placedOrdersList, setPlacedOrdersList] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+
+  // UPI configuration & verification state
+  const [publicSettings, setPublicSettings] = useState(null);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const lastStatusRef = useRef(null);
+
+  // Load public configurations on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await api.getPublicSettings();
+        setPublicSettings(settings);
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Status transition sound watcher
+  useEffect(() => {
+    if (!order) return;
+    const currentStatus = order.status.toUpperCase();
+    if (lastStatusRef.current && lastStatusRef.current !== currentStatus) {
+      if (['PREPARING', 'READY', 'SERVED'].includes(currentStatus)) {
+        playCustomerStatusAlert();
+      }
+    }
+    lastStatusRef.current = currentStatus;
+  }, [order]);
+
+  const handleVerifyPayment = async () => {
+    if (verifyingPayment) return;
+    setVerifyingPayment(true);
+    
+    // Simulate verification check for 3 seconds
+    setTimeout(async () => {
+      try {
+        const updated = await api.updateOrderPaymentStatus(order.id, 'COMPLETED');
+        setOrder(updated);
+        playPaymentReceivedSound();
+        alert('UPI Payment Verified! Thank you. Your order is in preparation.');
+        window.dispatchEvent(new Event('cafe_orders_updated'));
+      } catch (err) {
+        alert(err.message || 'Verification failed. Please try again.');
+        console.error(err);
+      } finally {
+        setVerifyingPayment(false);
+      }
+    }, 3000);
+  };
 
   // 1. Fetch Order Data initially & setup polling/WebSockets (Single tracking mode)
   useEffect(() => {
@@ -110,7 +162,7 @@ export default function OrderTrackingPage() {
     const fetchHistory = async () => {
       setLoadingHistory(true);
       try {
-        const storedIds = JSON.parse(localStorage.getItem('cafe_placed_orders') || '[]');
+        const storedIds = getSavedOrderIds();
         if (storedIds.length === 0) {
           setPlacedOrdersList([]);
           setLoadingHistory(false);
@@ -443,6 +495,49 @@ export default function OrderTrackingPage() {
               </span>
               <span className="text-lg font-medium text-gray-500 dark:text-gray-400 self-end mb-1">mins</span>
             </div>
+          </div>
+        )}
+
+        {/* UPI Payment Card */}
+        {order.paymentMethod.startsWith('UPI') && order.paymentStatus === 'PENDING' && order.status !== 'CANCELLED' && (
+          <div className="my-6 p-5 bg-cafe-gold/5 border border-cafe-gold/25 rounded-2xl space-y-4 max-w-sm mx-auto shadow-inner animate-scale-in">
+            <div className="text-center">
+              <Sparkles className="w-6 h-6 text-cafe-gold mx-auto mb-1 animate-pulse" />
+              <h4 className="font-serif text-sm font-bold dark:text-white">Complete Your UPI Payment</h4>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 font-light leading-normal">
+                Scan the QR code below to pay directly to the café.
+              </p>
+            </div>
+
+            <div className="w-36 h-36 bg-white p-2 rounded-xl border border-gray-150 flex items-center justify-center mx-auto shadow-sm">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(
+                  `upi://pay?pa=${publicSettings?.upi_id || 'smartcafe@ybl'}&pn=SmartCafe&am=${(order.totalPrice).toFixed(2)}&cu=INR`
+                )}`} 
+                alt="UPI Payment QR" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            <div className="text-[10px] text-gray-500 dark:text-gray-400 flex flex-col items-center gap-1">
+              <span>UPI ID: <strong className="font-semibold select-all font-mono text-cafe-darkgold dark:text-cafe-gold">{publicSettings?.upi_id || 'smartcafe@ybl'}</strong></span>
+              <span>Amount: <strong className="font-semibold text-gray-800 dark:text-white">${order.totalPrice.toFixed(2)}</strong></span>
+            </div>
+
+            <button
+              onClick={handleVerifyPayment}
+              disabled={verifyingPayment}
+              className="w-full py-2.5 bg-cafe-wood hover:bg-cafe-chocolate dark:bg-cafe-gold dark:text-cafe-chocolate dark:hover:bg-cafe-darkgold dark:hover:text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              {verifyingPayment ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white dark:border-cafe-chocolate border-t-transparent rounded-full animate-spin" />
+                  <span>Verifying Transaction...</span>
+                </>
+              ) : (
+                <span>Verify Payment</span>
+              )}
+            </button>
           </div>
         )}
 

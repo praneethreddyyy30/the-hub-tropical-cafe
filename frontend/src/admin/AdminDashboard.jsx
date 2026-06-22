@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
 import { connectWebSocket, subscribeToOrders, disconnectWebSocket } from '../services/websocket';
 import { parseBackendDate } from '../utils/dateUtils';
+import { playAdminNotificationSound, playPaymentReceivedSound } from '../utils/soundUtils';
 
 // Recharts components for Analytics
 import { 
@@ -56,7 +57,8 @@ export default function AdminDashboard() {
     emailjs_service_id: '',
     emailjs_template_id: '',
     emailjs_public_key: '',
-    admin_email: ''
+    admin_email: '',
+    upi_id: ''
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [testingWebhook, setTestingWebhook] = useState(false);
@@ -71,26 +73,7 @@ export default function AdminDashboard() {
   // Loading States
   const [loading, setLoading] = useState(true);
 
-  // Synth sound on new order
-  const playNewOrderSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      // Arpeggio sound D5 -> A5
-      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-      osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.1); // A5
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.4);
-    } catch (e) {
-      console.warn('Audio Context sound block:', e);
-    }
-  };
+  // (playNewOrderSound has been clean migrated to soundUtils.js)
 
   // Redirect if not admin
   useEffect(() => {
@@ -136,7 +119,8 @@ export default function AdminDashboard() {
           emailjs_service_id: settings.emailjs_service_id || '',
           emailjs_template_id: settings.emailjs_template_id || '',
           emailjs_public_key: settings.emailjs_public_key || '',
-          admin_email: settings.admin_email || ''
+          admin_email: settings.admin_email || '',
+          upi_id: settings.upi_id || ''
         });
       } catch (err) {
         console.error('Failed to load integration settings:', err);
@@ -157,9 +141,22 @@ export default function AdminDashboard() {
         subscribeToOrders((updatedOrder) => {
           // Play notification chime on any new order (Received status)
           if (updatedOrder.status === 'RECEIVED') {
-            playNewOrderSound();
+            playAdminNotificationSound();
           }
           
+          // Check if payment was just completed
+          setOrdersList(prevList => {
+            const existingOrder = prevList.find(o => o.id === updatedOrder.id);
+            if (
+              existingOrder && 
+              existingOrder.paymentStatus !== 'COMPLETED' && 
+              updatedOrder.paymentStatus === 'COMPLETED'
+            ) {
+              playPaymentReceivedSound();
+            }
+            return prevList;
+          });
+
           // Hot reload orders and overview
           api.adminGetOrders().then(ords => setOrdersList(ords));
           api.adminGetDashboardOverview().then(ov => setOverviewMetrics(ov));
@@ -1232,6 +1229,33 @@ export default function AdminDashboard() {
                       Emails are triggered asynchronously from the customer terminal on successful validation of checkout. 
                       Configuring this eliminates the need for complex server SMTP setups.
                     </p>
+                  </div>
+
+                  {/* UPI QR Payment Configuration Card */}
+                  <div className="bg-white dark:bg-cafe-chocolate/10 border border-cafe-gold/25 p-6 rounded-2xl shadow-xs space-y-4">
+                    <div className="flex justify-between items-start border-b border-gray-150 dark:border-cafe-wood/20 pb-3">
+                      <div>
+                        <h3 className="font-serif text-base font-bold dark:text-white">UPI QR Code Payment Settings</h3>
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-light mt-0.5">Configure your UPI ID to receive direct payments from customer checkout scans.</p>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 bg-cafe-gold/10 text-cafe-darkgold dark:text-cafe-gold border border-cafe-gold/25 rounded font-bold uppercase tracking-wider">
+                        Direct P2P
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Merchant / Owner UPI ID (VPA)</label>
+                      <input
+                        type="text"
+                        placeholder="cafeowner@okaxis"
+                        value={integrationsForm.upi_id || ''}
+                        onChange={(e) => setIntegrationsForm({ ...integrationsForm, upi_id: e.target.value })}
+                        className="w-full px-3.5 py-2.5 border border-cafe-gold/20 bg-white dark:bg-cafe-charcoal rounded-xl text-xs text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none"
+                      />
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-normal font-light">
+                        Enter your active personal or business UPI Virtual Payment Address (VPA). The customer's tracking and ordering screen will generate a dynamic QR code embedded with the exact bill total.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Submit Button */}

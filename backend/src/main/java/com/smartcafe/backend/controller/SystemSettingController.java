@@ -30,7 +30,8 @@ public class SystemSettingController {
             if (key.equals("emailjs_service_id") || 
                 key.equals("emailjs_template_id") || 
                 key.equals("emailjs_public_key") || 
-                key.equals("admin_email")) {
+                key.equals("admin_email") ||
+                key.equals("upi_id")) {
                 publicMap.put(key, setting.getValue());
             }
         }

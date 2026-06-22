@@ -7,7 +7,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
-import { parseBackendDate } from '../utils/dateUtils';
+import { parseBackendDate, saveOrderToHistory } from '../utils/dateUtils';
 
 export default function MenuPage() {
   const [searchParams] = useSearchParams();
@@ -37,6 +37,20 @@ export default function MenuPage() {
   const [utrNumber, setUtrNumber] = useState('');
   const [skipUtr, setSkipUtr] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [publicSettings, setPublicSettings] = useState(null);
+
+  // Fetch system settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await api.getPublicSettings();
+        setPublicSettings(settings);
+      } catch (err) {
+        console.error('Failed to load public settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // 1. Detect Table Number
   useEffect(() => {
@@ -100,7 +114,11 @@ export default function MenuPage() {
 
   const sendEmailJSAlert = async (order) => {
     try {
-      const settings = await api.getPublicSettings();
+      const settings = publicSettings;
+      if (!settings) {
+        console.info('Public settings not loaded yet. Skipping notification email.');
+        return;
+      }
       const serviceId = settings.emailjs_service_id;
       const templateId = settings.emailjs_template_id;
       const publicKey = settings.emailjs_public_key;
@@ -180,19 +198,7 @@ export default function MenuPage() {
       setOrderConfirm(result);
       
       // Save order to localStorage for tab/session persistence
-      try {
-        const placedOrders = JSON.parse(localStorage.getItem('cafe_placed_orders') || '[]');
-        if (!placedOrders.includes(result.id)) {
-          placedOrders.push(result.id);
-          if (placedOrders.length > 20) {
-            placedOrders.shift();
-          }
-          localStorage.setItem('cafe_placed_orders', JSON.stringify(placedOrders));
-          window.dispatchEvent(new Event('cafe_orders_updated'));
-        }
-      } catch (storageErr) {
-        console.error('Error saving order ID to localStorage:', storageErr);
-      }
+      saveOrderToHistory(result.id);
       
       // Async dispatch email notification to the administrator
       sendEmailJSAlert(result);
@@ -667,7 +673,7 @@ export default function MenuPage() {
             <div className="w-40 h-40 bg-white p-2 rounded-xl border border-gray-150 flex items-center justify-center mx-auto mb-4 shadow-inner">
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
-                  `upi://pay?pa=smartcafe@ybl&pn=SmartCafe&am=${(cartTotal + (cartTotal * 0.05) + 1.00).toFixed(2)}&cu=USD`
+                  `upi://pay?pa=${publicSettings?.upi_id || 'smartcafe@ybl'}&pn=SmartCafe&am=${(cartTotal + (cartTotal * 0.05) + 1.00).toFixed(2)}&cu=INR`
                 )}`} 
                 alt="UPI Payment QR" 
                 className="w-full h-full object-contain"
@@ -682,10 +688,12 @@ export default function MenuPage() {
               <div className="flex justify-between items-center">
                 <span>UPI ID</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-mono text-cafe-darkgold dark:text-cafe-gold select-all font-semibold">smartcafe@ybl</span>
+                  <span className="font-mono text-cafe-darkgold dark:text-cafe-gold select-all font-semibold">
+                    {publicSettings?.upi_id || 'smartcafe@ybl'}
+                  </span>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText('smartcafe@ybl');
+                      navigator.clipboard.writeText(publicSettings?.upi_id || 'smartcafe@ybl');
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}

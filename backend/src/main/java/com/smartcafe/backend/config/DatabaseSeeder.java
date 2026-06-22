@@ -54,7 +54,13 @@ public class DatabaseSeeder implements CommandLineRunner {
             systemSettingRepository.save(new SystemSetting("emailjs_template_id", ""));
             systemSettingRepository.save(new SystemSetting("emailjs_public_key", ""));
             systemSettingRepository.save(new SystemSetting("admin_email", "admin@smartcafe.com"));
+            systemSettingRepository.save(new SystemSetting("upi_id", "smartcafe@ybl"));
             System.out.println(">>> Database seeded: System settings initialized.");
+        } else {
+            if (!systemSettingRepository.existsById("upi_id")) {
+                systemSettingRepository.save(new SystemSetting("upi_id", "smartcafe@ybl"));
+                System.out.println(">>> Database updated: System settings upi_id seeded.");
+            }
         }
 
         // 3. Seed default Menu Items

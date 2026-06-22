@@ -60,6 +60,17 @@ export const api = {
     return res.json();
   },
 
+  updateOrderPaymentStatus: async (orderId, status) => {
+    const res = await fetch(`${BASE_URL}/orders/${orderId}/payment-status?status=${status}`, {
+      method: 'PUT'
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to update payment status');
+    }
+    return res.json();
+  },
+
   // Public Feedback APIs
   submitFeedback: async (feedbackData) => {
     const res = await fetch(`${BASE_URL}/feedback/submit`, {
