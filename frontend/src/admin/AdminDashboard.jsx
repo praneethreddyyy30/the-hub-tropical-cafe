@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
 import { connectWebSocket, subscribeToOrders, disconnectWebSocket } from '../services/websocket';
+import { parseBackendDate } from '../utils/dateUtils';
 
 // Recharts components for Analytics
 import { 
@@ -1057,7 +1058,7 @@ export default function AdminDashboard() {
                             <div>
                               <h4 className="font-bold text-sm text-gray-800 dark:text-white">{rev.customerName}</h4>
                               <span className="text-[10px] text-gray-400 font-light">
-                                {new Date(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                {parseBackendDate(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
                             

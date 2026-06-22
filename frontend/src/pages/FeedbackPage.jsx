@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, CheckCircle2, User, Clock } from 'lucide-react';
 import { api } from '../services/api';
+import { parseBackendDate } from '../utils/dateUtils';
 
 export default function FeedbackPage() {
   const [rating, setRating] = useState(5);
@@ -206,7 +207,7 @@ export default function FeedbackPage() {
                   
                   <div className="flex items-center gap-1 text-[10px] text-gray-400">
                     <Clock className="w-3 h-3" />
-                    <span>{new Date(review.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span>{parseBackendDate(review.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                 </div>
               ))}

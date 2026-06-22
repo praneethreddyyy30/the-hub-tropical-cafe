@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   Coffee, Gamepad2, Compass, MessageSquare, ClipboardList, 
@@ -29,6 +29,29 @@ function AppLayout() {
 
   // Retrieve table number from localstorage for header display
   const tableNum = localStorage.getItem('tableNumber');
+
+  const [placedOrders, setPlacedOrders] = useState([]);
+
+  useEffect(() => {
+    const loadOrders = () => {
+      try {
+        const orders = JSON.parse(localStorage.getItem('cafe_placed_orders') || '[]');
+        setPlacedOrders(orders);
+      } catch (err) {
+        console.error('Error reading placed orders:', err);
+      }
+    };
+
+    loadOrders();
+
+    window.addEventListener('cafe_orders_updated', loadOrders);
+    window.addEventListener('storage', loadOrders);
+
+    return () => {
+      window.removeEventListener('cafe_orders_updated', loadOrders);
+      window.removeEventListener('storage', loadOrders);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -63,6 +86,12 @@ function AppLayout() {
               <Link to="/feedback" className="px-3.5 py-2 rounded-lg text-gray-600 dark:text-gray-200 hover:text-cafe-wood dark:hover:text-cafe-gold transition">
                 Feedback
               </Link>
+              {placedOrders.length > 0 && (
+                <Link to="/track" className="px-3.5 py-2 rounded-lg text-cafe-darkgold dark:text-cafe-gold hover:text-cafe-wood dark:hover:text-cafe-gold transition flex items-center gap-1">
+                  <ClipboardList className="w-4 h-4" />
+                  <span>My Orders</span>
+                </Link>
+              )}
             </nav>
 
             {/* Secondary actions: Table Badge, Theme, Admin Link */}
@@ -176,6 +205,20 @@ function AppLayout() {
             <MessageSquare className="w-5 h-5 mb-0.5" />
             <span>Review</span>
           </Link>
+          
+          {placedOrders.length > 0 && (
+            <Link 
+              to="/track" 
+              className={`flex flex-col items-center justify-center flex-1 py-1 text-[11px] font-bold transition-colors ${
+                location.pathname === '/track'
+                  ? 'text-cafe-wood dark:text-cafe-gold' 
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+              }`}
+            >
+              <ClipboardList className="w-5 h-5 mb-0.5" />
+              <span>My Orders</span>
+            </Link>
+          )}
         </nav>
       )}
     </div>

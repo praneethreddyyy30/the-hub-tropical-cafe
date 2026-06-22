@@ -35,7 +35,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/menu/public/**", "/api/menu", "/api/settings/public").permitAll()
-                .requestMatchers("/api/orders/public/**", "/api/orders/create", "/api/orders/track/**").permitAll()
+                .requestMatchers("/api/orders/public/**", "/api/orders/create", "/api/orders/track/**", "/api/orders/*/cancel").permitAll()
                 .requestMatchers("/api/feedback", "/api/feedback/submit").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

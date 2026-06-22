@@ -7,6 +7,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
+import { parseBackendDate } from '../utils/dateUtils';
 
 export default function MenuPage() {
   const [searchParams] = useSearchParams();
@@ -178,6 +179,21 @@ export default function MenuPage() {
       const result = await api.createOrder(orderData);
       setOrderConfirm(result);
       
+      // Save order to localStorage for tab/session persistence
+      try {
+        const placedOrders = JSON.parse(localStorage.getItem('cafe_placed_orders') || '[]');
+        if (!placedOrders.includes(result.id)) {
+          placedOrders.push(result.id);
+          if (placedOrders.length > 20) {
+            placedOrders.shift();
+          }
+          localStorage.setItem('cafe_placed_orders', JSON.stringify(placedOrders));
+          window.dispatchEvent(new Event('cafe_orders_updated'));
+        }
+      } catch (storageErr) {
+        console.error('Error saving order ID to localStorage:', storageErr);
+      }
+      
       // Async dispatch email notification to the administrator
       sendEmailJSAlert(result);
 
@@ -200,6 +216,7 @@ export default function MenuPage() {
       await api.cancelOrder(orderId);
       alert('Order cancelled successfully.');
       setOrderConfirm(null);
+      window.dispatchEvent(new Event('cafe_orders_updated'));
     } catch (err) {
       alert(err.message || 'Failed to cancel order.');
       console.error(err);
@@ -423,7 +440,7 @@ export default function MenuPage() {
                 {/* Review Author Name & Date */}
                 <div className="border-t border-gray-100 dark:border-cafe-wood/20 pt-3 flex justify-between items-center text-[10px] text-gray-400">
                   <span className="font-semibold text-gray-800 dark:text-white">{rev.customerName}</span>
-                  <span>{new Date(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  <span>{parseBackendDate(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
               </div>
             ))}
