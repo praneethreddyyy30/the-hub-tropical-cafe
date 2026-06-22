@@ -122,11 +122,6 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        <div className="text-center mt-6">
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 italic">
-            Default credentials: <strong className="text-cafe-darkgold dark:text-cafe-gold">admin / admin123</strong>
-          </p>
-        </div>
       </div>
     </div>
   );
