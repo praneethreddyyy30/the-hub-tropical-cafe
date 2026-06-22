@@ -40,6 +40,7 @@ export default function AdminDashboard() {
   // Filters & Searching
   const [orderQuery, setOrderQuery] = useState('');
   const [orderFilterStatus, setOrderFilterStatus] = useState('ALL');
+  const [activeOnly, setActiveOnly] = useState(true);
   const [menuQuery, setMenuQuery] = useState('');
   const [feedbackQuery, setFeedbackQuery] = useState('');
   const [feedbackFilterRating, setFeedbackFilterRating] = useState('ALL');
@@ -413,7 +414,8 @@ export default function AdminDashboard() {
   const filteredOrders = ordersList.filter(o => {
     const matchesSearch = o.id.toString().includes(orderQuery) || o.tableNumber.toString().includes(orderQuery);
     const matchesFilter = orderFilterStatus === 'ALL' || o.status === orderFilterStatus;
-    return matchesSearch && matchesFilter;
+    const matchesActive = !activeOnly || !['SERVED', 'CANCELLED'].includes(o.status.toUpperCase());
+    return matchesSearch && matchesFilter && matchesActive;
   });
 
   // Filters for Menu
@@ -645,6 +647,16 @@ export default function AdminDashboard() {
                       <option value="READY">Ready</option>
                       <option value="SERVED">Served</option>
                     </select>
+
+                    <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 font-semibold cursor-pointer select-none border border-cafe-gold/25 px-3 py-2 rounded-xl bg-white dark:bg-cafe-chocolate/20">
+                      <input
+                        type="checkbox"
+                        checked={activeOnly}
+                        onChange={(e) => setActiveOnly(e.target.checked)}
+                        className="rounded border-gray-300 text-cafe-wood focus:ring-cafe-gold h-3.5 w-3.5"
+                      />
+                      <span>Active Only</span>
+                    </label>
                   </div>
                 </div>
 
