@@ -843,7 +843,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {Array.from({ length: numTables }).map((_, i) => {
                     const tableId = i + 1;
-                    const url = `http://localhost:5173/menu?table=${tableId}`;
+                    const url = `${window.location.origin}/?table=${tableId}`;
                     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
                     
                     return (
