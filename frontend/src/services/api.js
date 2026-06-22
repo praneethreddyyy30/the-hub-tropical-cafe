@@ -203,5 +203,14 @@ export const api = {
       throw new Error(errText || 'Failed to change password');
     }
     return res.json();
+  },
+
+  adminDeleteFeedback: async (id) => {
+    const res = await fetch(`${BASE_URL}/admin/feedback/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to delete feedback');
+    return res.json();
   }
 };

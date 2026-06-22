@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Search, ShoppingBag, Plus, Minus, Trash2, X, Clock, 
-  Check, Sparkles, CreditCard, DollarSign, ArrowRight, Compass 
+  Check, Sparkles, CreditCard, DollarSign, ArrowRight, Compass, Star 
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
@@ -19,6 +19,7 @@ export default function MenuPage() {
   const { darkMode } = useTheme();
 
   const [menuItems, setMenuItems] = useState([]);
+  const [reviewsList, setReviewsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -70,6 +71,20 @@ export default function MenuPage() {
       }
     };
     fetchMenu();
+  }, []);
+
+  // Fetch customer reviews (filtered for top reviews >= 4 stars)
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const data = await api.getFeedbackList();
+        const topReviews = data.filter(r => r.rating >= 4).slice(0, 6);
+        setReviewsList(topReviews);
+      } catch (err) {
+        console.error('Error loading reviews:', err);
+      }
+    };
+    fetchReviews();
   }, []);
 
   const categories = ['All', 'Coffee', 'Tea', 'Snacks', 'Desserts', 'Combos'];
@@ -363,6 +378,58 @@ export default function MenuPage() {
           </div>
         )}
       </div>
+
+      {/* Top Reviews Section (Option 3) */}
+      {reviewsList.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 py-12 border-t border-cafe-gold/20 mt-8 mb-4">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-1.5 bg-cafe-gold/10 text-cafe-darkgold dark:text-cafe-gold px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>What Guests Say</span>
+            </div>
+            <h2 className="font-serif text-2xl md:text-3xl font-bold dark:text-white mb-2">Guest Review Highlights</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-light max-w-md mx-auto">
+              Real reviews from actual customers who visited our botanical dining escape.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {reviewsList.map((rev) => (
+              <div 
+                key={rev.id} 
+                className="bg-white dark:bg-cafe-chocolate/10 border border-cafe-gold/15 p-5 rounded-2xl shadow-sm flex flex-col justify-between"
+              >
+                <div>
+                  {/* Rating Stars */}
+                  <div className="flex gap-0.5 mb-3">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star 
+                        key={s} 
+                        className={`w-3.5 h-3.5 ${
+                          s <= rev.rating 
+                            ? 'text-cafe-gold fill-cafe-gold' 
+                            : 'text-gray-100 dark:text-cafe-wood/20'
+                        }`} 
+                      />
+                    ))}
+                  </div>
+
+                  {/* Review Text */}
+                  <p className="text-xs text-gray-600 dark:text-gray-300 font-light leading-relaxed italic mb-4">
+                    "{rev.suggestions}"
+                  </p>
+                </div>
+
+                {/* Review Author Name & Date */}
+                <div className="border-t border-gray-100 dark:border-cafe-wood/20 pt-3 flex justify-between items-center text-[10px] text-gray-400">
+                  <span className="font-semibold text-gray-800 dark:text-white">{rev.customerName}</span>
+                  <span>{new Date(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Cart Button Overlay */}
       {cartCount > 0 && (

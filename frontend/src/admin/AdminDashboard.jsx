@@ -32,12 +32,15 @@ export default function AdminDashboard() {
   const [ordersList, setOrdersList] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [feedbackSummary, setFeedbackSummary] = useState({ averageRating: 0.0, totalReviews: 0, ratingDistribution: [] });
+  const [feedbackList, setFeedbackList] = useState([]);
   const [salesAnalytics, setSalesAnalytics] = useState([]);
 
   // Filters & Searching
   const [orderQuery, setOrderQuery] = useState('');
   const [orderFilterStatus, setOrderFilterStatus] = useState('ALL');
   const [menuQuery, setMenuQuery] = useState('');
+  const [feedbackQuery, setFeedbackQuery] = useState('');
+  const [feedbackFilterRating, setFeedbackFilterRating] = useState('ALL');
 
   // Modals & Forms
   const [menuModalOpen, setMenuModalOpen] = useState(false);
@@ -119,6 +122,10 @@ export default function AdminDashboard() {
       // Fetch feedback stats
       const feeds = await api.adminGetFeedbackSummary();
       setFeedbackSummary(feeds);
+
+      // Fetch all reviews for moderation
+      const fList = await api.getFeedbackList();
+      setFeedbackList(fList);
 
       // Fetch integration settings
       try {
@@ -259,6 +266,19 @@ export default function AdminDashboard() {
       loadDashboardData();
     } catch (err) {
       alert('Failed to delete item.');
+      console.error(err);
+    }
+  };
+
+  const handleDeleteFeedback = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+    try {
+      await api.adminDeleteFeedback(id);
+      setFeedbackList(prev => prev.filter(f => f.id !== id));
+      const feeds = await api.adminGetFeedbackSummary();
+      setFeedbackSummary(feeds);
+    } catch (err) {
+      alert('Failed to delete review.');
       console.error(err);
     }
   };
@@ -404,6 +424,14 @@ export default function AdminDashboard() {
            m.category.toLowerCase().includes(menuQuery.toLowerCase());
   });
 
+  // Filters for Feedback
+  const filteredFeedback = feedbackList.filter(f => {
+    const matchesSearch = (f.customerName && f.customerName.toLowerCase().includes(feedbackQuery.toLowerCase())) || 
+                          (f.suggestions && f.suggestions.toLowerCase().includes(feedbackQuery.toLowerCase()));
+    const matchesFilter = feedbackFilterRating === 'ALL' || f.rating.toString() === feedbackFilterRating;
+    return matchesSearch && matchesFilter;
+  });
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-cafe-cream dark:bg-cafe-charcoal transition-colors">
       
@@ -427,6 +455,7 @@ export default function AdminDashboard() {
               { id: 'menu', label: 'Menu Mgmt', icon: Coffee },
               { id: 'qr', label: 'QR Codes', icon: QrCode },
               { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+              { id: 'reviews', label: 'Reviews', icon: Star },
               { id: 'integrations', label: 'Integrations', icon: Sparkles }
             ].map(tab => (
               <button
@@ -967,6 +996,107 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* ==========================================================
+               TAB: REVIEW MODERATION & MANAGEMENT
+               ========================================================== */}
+            {activeTab === 'reviews' && (
+              <div className="space-y-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                    <h2 className="font-serif text-2xl md:text-3xl font-bold dark:text-white mb-1.5">Review Moderation</h2>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Moderate customer reviews and feedback comments submitted on the storefront.</p>
+                  </div>
+                  
+                  {/* Filters Bar */}
+                  <div className="flex flex-wrap gap-2.5 items-center w-full md:w-auto">
+                    <div className="relative flex-1 md:w-64">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="w-4 h-4 text-gray-400" />
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Search reviewer or comment..."
+                        value={feedbackQuery}
+                        onChange={(e) => setFeedbackQuery(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-white dark:bg-cafe-chocolate/20 border border-cafe-gold/25 rounded-xl text-xs text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none"
+                      />
+                    </div>
+                    <select
+                      value={feedbackFilterRating}
+                      onChange={(e) => setFeedbackFilterRating(e.target.value)}
+                      className="px-3 py-2 bg-white dark:bg-cafe-chocolate/20 border border-cafe-gold/25 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none"
+                    >
+                      <option value="ALL">All Ratings</option>
+                      <option value="5">5 Stars</option>
+                      <option value="4">4 Stars</option>
+                      <option value="3">3 Stars</option>
+                      <option value="2">2 Stars</option>
+                      <option value="1">1 Star</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Reviews Grid */}
+                {filteredFeedback.length === 0 ? (
+                  <div className="text-center py-16 bg-white dark:bg-cafe-chocolate/5 border rounded-2xl">
+                    <p className="text-gray-400 dark:text-gray-500 text-sm font-light">No matching reviews found.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredFeedback.map((rev) => (
+                      <div 
+                        key={rev.id} 
+                        className="bg-white dark:bg-cafe-chocolate/10 border border-cafe-gold/20 rounded-2xl p-5 shadow-xs flex flex-col justify-between"
+                      >
+                        <div>
+                          {/* Card Header */}
+                          <div className="flex justify-between items-start mb-3 border-b border-gray-100 dark:border-cafe-wood/20 pb-3">
+                            <div>
+                              <h4 className="font-bold text-sm text-gray-800 dark:text-white">{rev.customerName}</h4>
+                              <span className="text-[10px] text-gray-400 font-light">
+                                {new Date(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            
+                            {/* Stars Display */}
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star 
+                                  key={s} 
+                                  className={`w-3.5 h-3.5 ${
+                                    s <= rev.rating 
+                                      ? 'text-cafe-gold fill-cafe-gold' 
+                                      : 'text-gray-100 dark:text-cafe-wood/20'
+                                  }`} 
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Review Text */}
+                          <p className="text-xs text-gray-600 dark:text-gray-300 font-light leading-relaxed mb-4 whitespace-pre-wrap">
+                            "{rev.suggestions}"
+                          </p>
+                        </div>
+
+                        {/* Card Footer Actions */}
+                        <div className="border-t border-gray-100 dark:border-cafe-wood/20 pt-3 mt-3 flex justify-end">
+                          <button
+                            onClick={() => handleDeleteFeedback(rev.id)}
+                            className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5"
+                            title="Delete this review"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete Review</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

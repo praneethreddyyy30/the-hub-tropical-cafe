@@ -47,4 +47,13 @@ public class FeedbackController {
 
         return ResponseEntity.ok(summary);
     }
+
+    // Admin API: Delete feedback
+    @DeleteMapping("/admin/feedback/{id}")
+    public ResponseEntity<Map<String, String>> deleteFeedback(@PathVariable Long id) {
+        feedbackRepository.deleteById(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Feedback deleted successfully");
+        return ResponseEntity.ok(response);
+    }
 }
