@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/orders/public/**", "/api/orders/create", "/api/orders/track/**", "/api/orders/*/cancel", "/api/orders/*/payment-status").permitAll()
                 .requestMatchers("/api/feedback", "/api/feedback/submit").permitAll()
                 .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/api/admin/overview", "/api/admin/orders").hasAnyAuthority("ROLE_ADMIN", "ROLE_STAFF")
+                .requestMatchers("/api/admin/overview", "/api/admin/orders/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_STAFF")
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
             )
