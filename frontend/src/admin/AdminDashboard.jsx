@@ -767,32 +767,7 @@ export default function AdminDashboard() {
                   ))}
                 </div>
 
-                {/* Admin Only Weekly Report Actions */}
-                {user?.role === 'ROLE_ADMIN' && (
-                  <div className="bg-white dark:bg-cafe-chocolate/10 border border-cafe-gold/20 p-6 rounded-2xl shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div>
-                      <h3 className="font-serif text-base font-bold dark:text-white">Weekly Excel/CSV Report</h3>
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 font-light mt-0.5">Download or email the sales report for the current week (last 7 days).</p>
-                    </div>
-                    <div className="flex gap-3 w-full md:w-auto">
-                      <button
-                        onClick={handleDownloadWeeklyReport}
-                        className="flex-1 md:flex-none px-4 py-2.5 bg-cafe-wood hover:bg-cafe-chocolate text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span>Download Excel/CSV</span>
-                      </button>
-                      <button
-                        onClick={handleEmailWeeklyReport}
-                        disabled={sendingReport}
-                        className={`flex-1 md:flex-none px-4 py-2.5 bg-cafe-gold hover:bg-cafe-darkgold text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer ${sendingReport ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <Mail className="w-4 h-4" />
-                        <span>{sendingReport ? 'Emailing...' : 'Email Report'}</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Grid details */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

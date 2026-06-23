@@ -16,6 +16,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     List<Order> findAllByOrderByCreatedAtDesc();
 
+    List<Order> findByCreatedAtAfter(java.time.LocalDateTime dateTime);
+
     @Query("SELECT COUNT(o) FROM Order o WHERE o.status != 'SERVED'")
     long countPendingOrders();
 
