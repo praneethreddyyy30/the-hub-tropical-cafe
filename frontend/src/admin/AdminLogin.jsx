@@ -59,9 +59,9 @@ export default function AdminLogin() {
           <div className="w-12 h-12 bg-cafe-gold/10 text-cafe-gold rounded-full flex items-center justify-center mx-auto mb-3 border border-cafe-gold/30">
             <Compass className="w-6 h-6 animate-pulse text-cafe-wood dark:text-cafe-gold" />
           </div>
-          <h2 className="font-serif text-2xl font-bold dark:text-white">Admin Portal</h2>
+          <h2 className="font-serif text-2xl font-bold dark:text-white">Café Portal</h2>
           <p className="text-xs text-gray-400 dark:text-gray-500 font-light mt-1.5">
-            Authenticate to access orders, menu configurations, and café telemetry.
+            Authenticate as Admin or Staff to access orders and dashboard metrics.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default function AdminLogin() {
               <input
                 type="text"
                 required
-                placeholder="admin"
+                placeholder="admin or staff"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-cafe-gold/25 bg-white dark:bg-cafe-charcoal/50 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cafe-gold transition"
