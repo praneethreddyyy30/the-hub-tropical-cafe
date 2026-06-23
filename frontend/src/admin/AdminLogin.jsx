@@ -4,7 +4,7 @@ import { Lock, User, AlertCircle, Compass, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminLogin() {
-  const { login, isAdmin } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -14,10 +14,10 @@ export default function AdminLogin() {
 
   // If already logged in, redirect to dashboard
   React.useEffect(() => {
-    if (isAdmin) {
+    if (isAuthenticated) {
       navigate('/admin/dashboard');
     }
-  }, [isAdmin, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

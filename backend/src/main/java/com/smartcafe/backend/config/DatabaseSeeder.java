@@ -47,6 +47,27 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         }
 
+        // 1b. Seed Staff User
+        String envStaffPassword = System.getenv("STAFF_PASSWORD");
+        String targetStaffPassword = (envStaffPassword != null && !envStaffPassword.isBlank()) ? envStaffPassword : "staff123";
+
+        User staff = userRepository.findByUsername("staff").orElse(null);
+        if (staff == null) {
+            staff = User.builder()
+                    .username("staff")
+                    .password(passwordEncoder.encode(targetStaffPassword))
+                    .role("ROLE_STAFF")
+                    .build();
+            userRepository.save(staff);
+            System.out.println(">>> Database seeded: Staff user created.");
+        } else {
+            if (!passwordEncoder.matches(targetStaffPassword, staff.getPassword())) {
+                staff.setPassword(passwordEncoder.encode(targetStaffPassword));
+                userRepository.save(staff);
+                System.out.println(">>> Database updated: Staff password updated to match targetStaffPassword.");
+            }
+        }
+
         // 2. Seed System Settings
         if (systemSettingRepository.count() == 0) {
             systemSettingRepository.save(new SystemSetting("google_sheets_webhook", "https://script.google.com/macros/s/YOUR_MOCK_URL/exec"));

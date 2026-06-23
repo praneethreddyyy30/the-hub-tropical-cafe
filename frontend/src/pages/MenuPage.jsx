@@ -200,8 +200,8 @@ export default function MenuPage() {
       // Save order to localStorage for tab/session persistence
       saveOrderToHistory(result.id);
       
-      // Async dispatch email notification to the administrator
-      sendEmailJSAlert(result);
+      // Async dispatch email notification has been disabled per client request
+      // sendEmailJSAlert(result);
 
       clearCart();
       setIsCartOpen(false);

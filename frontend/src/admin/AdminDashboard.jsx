@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, ShoppingCart, Clock, CheckCircle2, Coffee, 
   Trash2, Edit, Plus, ToggleLeft, ToggleRight, QrCode, 
-  BarChart2, LogOut, Search, Printer, Download, Sparkles, Star, Compass
+  BarChart2, LogOut, Search, Printer, Download, Sparkles, Star, Compass, Mail
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -19,7 +19,7 @@ import {
 } from 'recharts';
 
 export default function AdminDashboard() {
-  const { logout, token, isAdmin } = useAuth();
+  const { logout, token, isAdmin, user, isAuthenticated } = useAuth();
   const { toggleTheme, darkMode } = useTheme();
   const navigate = useNavigate();
 
@@ -43,6 +43,7 @@ export default function AdminDashboard() {
   const [activeOnly, setActiveOnly] = useState(true);
   const [todayOnly, setTodayOnly] = useState(true);
   const [overviewTimeframe, setOverviewTimeframe] = useState('ALL');
+  const [sendingReport, setSendingReport] = useState(false);
   const [menuQuery, setMenuQuery] = useState('');
   const [feedbackQuery, setFeedbackQuery] = useState('');
   const [feedbackFilterRating, setFeedbackFilterRating] = useState('ALL');
@@ -78,12 +79,19 @@ export default function AdminDashboard() {
 
   // (playNewOrderSound has been clean migrated to soundUtils.js)
 
-  // Redirect if not admin
+  // Redirect if not authenticated
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isAuthenticated) {
       navigate('/admin/login');
     }
-  }, [isAdmin, navigate]);
+  }, [isAuthenticated, navigate]);
+
+  // Lock staff to overview tab
+  useEffect(() => {
+    if (user?.role === 'ROLE_STAFF' && activeTab !== 'overview') {
+      setActiveTab('overview');
+    }
+  }, [user, activeTab]);
 
   // Load Initial Dashboard Stats
   const loadDashboardData = async () => {
@@ -98,35 +106,38 @@ export default function AdminDashboard() {
       const ords = await api.adminGetOrders();
       setOrdersList(ords);
 
-      // Fetch menu items
-      const menu = await api.getMenu();
-      setMenuItems(menu);
+      // Only load admin data if user is not staff
+      if (user?.role !== 'ROLE_STAFF') {
+        // Fetch menu items
+        const menu = await api.getMenu();
+        setMenuItems(menu);
 
-      // Fetch sales trend
-      const sales = await api.adminGetSalesAnalytics();
-      setSalesAnalytics(sales);
+        // Fetch sales trend
+        const sales = await api.adminGetSalesAnalytics();
+        setSalesAnalytics(sales);
 
-      // Fetch feedback stats
-      const feeds = await api.adminGetFeedbackSummary();
-      setFeedbackSummary(feeds);
+        // Fetch feedback stats
+        const feeds = await api.adminGetFeedbackSummary();
+        setFeedbackSummary(feeds);
 
-      // Fetch all reviews for moderation
-      const fList = await api.getFeedbackList();
-      setFeedbackList(fList);
+        // Fetch all reviews for moderation
+        const fList = await api.getFeedbackList();
+        setFeedbackList(fList);
 
-      // Fetch integration settings
-      try {
-        const settings = await api.getAdminSettings();
-        setIntegrationsForm({
-          google_sheets_webhook: settings.google_sheets_webhook || '',
-          emailjs_service_id: settings.emailjs_service_id || '',
-          emailjs_template_id: settings.emailjs_template_id || '',
-          emailjs_public_key: settings.emailjs_public_key || '',
-          admin_email: settings.admin_email || '',
-          upi_id: settings.upi_id || ''
-        });
-      } catch (err) {
-        console.error('Failed to load integration settings:', err);
+        // Fetch integration settings
+        try {
+          const settings = await api.getAdminSettings();
+          setIntegrationsForm({
+            google_sheets_webhook: settings.google_sheets_webhook || '',
+            emailjs_service_id: settings.emailjs_service_id || '',
+            emailjs_template_id: settings.emailjs_template_id || '',
+            emailjs_public_key: settings.emailjs_public_key || '',
+            admin_email: settings.admin_email || '',
+            upi_id: settings.upi_id || ''
+          });
+        } catch (err) {
+          console.error('Failed to load integration settings:', err);
+        }
       }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
@@ -206,7 +217,7 @@ export default function AdminDashboard() {
   }, [ordersList, overviewTimeframe]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (token) {
       loadDashboardData();
       
       // Hook up WebSockets
@@ -240,7 +251,128 @@ export default function AdminDashboard() {
     return () => {
       disconnectWebSocket();
     };
-  }, [isAdmin, token]);
+  }, [token, user]);
+
+  // Helpers for Weekly Excel/CSV Report
+  const getWeeklyOrders = () => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return ordersList.filter(o => {
+      if (!o.createdAt) return false;
+      const orderDate = parseBackendDate(o.createdAt);
+      return orderDate && orderDate >= weekAgo;
+    });
+  };
+
+  const generateCSVString = (orders) => {
+    const headers = ["Order ID", "Table", "Total Price", "Status", "Payment Method", "Payment Status", "Date"];
+    const rows = orders.map(o => {
+      const orderDate = o.createdAt ? parseBackendDate(o.createdAt).toLocaleString() : "";
+      return [
+        o.id,
+        o.tableNumber,
+        `$${o.totalPrice.toFixed(2)}`,
+        o.status,
+        o.paymentMethod,
+        o.paymentStatus,
+        `"${orderDate}"`
+      ].join(",");
+    });
+    return [headers.join(","), ...rows].join("\n");
+  };
+
+  const handleDownloadWeeklyReport = () => {
+    const weeklyOrders = getWeeklyOrders();
+    if (weeklyOrders.length === 0) {
+      alert("No orders placed this week to generate a report.");
+      return;
+    }
+    const csvContent = generateCSVString(weeklyOrders);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `weekly_sales_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleEmailWeeklyReport = async () => {
+    const { emailjs_service_id, emailjs_template_id, emailjs_public_key, admin_email } = integrationsForm;
+    if (!emailjs_service_id || !emailjs_template_id || !emailjs_public_key) {
+      alert('Please configure your EmailJS settings in the Integrations tab before dispatching reports.');
+      return;
+    }
+
+    const weeklyOrders = getWeeklyOrders();
+    if (weeklyOrders.length === 0) {
+      alert("No orders placed this week to report.");
+      return;
+    }
+
+    setSendingReport(true);
+    try {
+      const totalRevenue = weeklyOrders.reduce((sum, o) => {
+        if (o.paymentStatus && ['COMPLETED', 'PAID'].includes(o.paymentStatus.toUpperCase())) {
+          return sum + (o.totalPrice || 0);
+        }
+        return sum;
+      }, 0);
+
+      let summary = "WEEKLY CAFE ORDERS SUMMARY REPORT\n";
+      summary += `Report Generated: ${new Date().toLocaleString()}\n`;
+      summary += "=========================================================\n\n";
+      summary += "Order ID | Table | Total   | Status    | Payment   | Date\n";
+      summary += "---------------------------------------------------------\n";
+      
+      weeklyOrders.forEach(o => {
+        const dateStr = o.createdAt ? parseBackendDate(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "";
+        const idPad = `#${o.id}`.padEnd(8);
+        const tablePad = `T${o.tableNumber}`.padEnd(8);
+        const pricePad = `$${o.totalPrice.toFixed(2)}`.padEnd(9);
+        const statusPad = o.status.padEnd(10);
+        const payPad = o.paymentStatus.padEnd(10);
+        summary += `${idPad} | ${tablePad} | ${pricePad} | ${statusPad} | ${payPad} | ${dateStr}\n`;
+      });
+      summary += "=========================================================\n";
+      summary += `Total Orders: ${weeklyOrders.length}\n`;
+      summary += `Total Settled Revenue: $${totalRevenue.toFixed(2)}\n`;
+
+      const emailPayload = {
+        service_id: emailjs_service_id,
+        template_id: emailjs_template_id,
+        user_id: emailjs_public_key,
+        template_params: {
+          order_id: `Weekly Report (${new Date().toLocaleDateString()})`,
+          table_number: "Weekly Report",
+          total_price: `$${totalRevenue.toFixed(2)}`,
+          payment_method: "Weekly Summary Report",
+          items_summary: summary,
+          admin_email: admin_email || "admin@smartcafe.com",
+          created_at: new Date().toLocaleString()
+        }
+      };
+
+      const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(emailPayload)
+      });
+
+      if (res.ok) {
+        alert('Weekly report summary emailed successfully via EmailJS!');
+      } else {
+        const errText = await res.text();
+        throw new Error(errText || 'EmailJS rejected the dispatch');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send weekly report email: ' + err.message);
+    } finally {
+      setSendingReport(false);
+    }
+  };
 
   // Handle Order Status advancement
   const handleUpdateStatus = async (id, currentStatus) => {
@@ -541,7 +673,12 @@ export default function AdminDashboard() {
               { id: 'analytics', label: 'Analytics', icon: BarChart2 },
               { id: 'reviews', label: 'Reviews', icon: Star },
               { id: 'integrations', label: 'Integrations', icon: Sparkles }
-            ].map(tab => (
+            ].filter(tab => {
+              if (user?.role === 'ROLE_STAFF') {
+                return tab.id === 'overview';
+              }
+              return true;
+            }).map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -629,6 +766,33 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+
+                {/* Admin Only Weekly Report Actions */}
+                {user?.role === 'ROLE_ADMIN' && (
+                  <div className="bg-white dark:bg-cafe-chocolate/10 border border-cafe-gold/20 p-6 rounded-2xl shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                      <h3 className="font-serif text-base font-bold dark:text-white">Weekly Excel/CSV Report</h3>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 font-light mt-0.5">Download or email the sales report for the current week (last 7 days).</p>
+                    </div>
+                    <div className="flex gap-3 w-full md:w-auto">
+                      <button
+                        onClick={handleDownloadWeeklyReport}
+                        className="flex-1 md:flex-none px-4 py-2.5 bg-cafe-wood hover:bg-cafe-chocolate text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download Excel/CSV</span>
+                      </button>
+                      <button
+                        onClick={handleEmailWeeklyReport}
+                        disabled={sendingReport}
+                        className={`flex-1 md:flex-none px-4 py-2.5 bg-cafe-gold hover:bg-cafe-darkgold text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer ${sendingReport ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <Mail className="w-4 h-4" />
+                        <span>{sendingReport ? 'Emailing...' : 'Email Report'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Grid details */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
