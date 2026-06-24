@@ -119,7 +119,7 @@ public class WeeklyReportService {
             String dateStr = o.getCreatedAt() != null ? o.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd")) : "";
             String idStr = "#" + o.getId();
             String tableStr = "T" + o.getTableNumber();
-            String priceStr = String.format("$%.2f", o.getTotalPrice());
+            String priceStr = String.format("₹%.2f", o.getTotalPrice());
             String statusStr = o.getStatus() != null ? o.getStatus() : "";
             String payStr = o.getPaymentStatus() != null ? o.getPaymentStatus() : "";
 
@@ -128,13 +128,13 @@ public class WeeklyReportService {
         }
         summary.append("=========================================================\n");
         summary.append("Total Orders: ").append(orders.size()).append("\n");
-        summary.append(String.format("Total Settled Revenue: $%.2f\n", totalRevenue));
+        summary.append(String.format("Total Settled Revenue: ₹%.2f\n", totalRevenue));
 
         // Format EmailJS request body
         Map<String, Object> templateParams = new HashMap<>();
         templateParams.put("order_id", "Weekly Report (" + now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ")");
         templateParams.put("table_number", "Weekly Report");
-        templateParams.put("total_price", String.format("$%.2f", totalRevenue));
+        templateParams.put("total_price", String.format("₹%.2f", totalRevenue));
         templateParams.put("payment_method", "Weekly Summary Report");
         templateParams.put("items_summary", summary.toString());
         templateParams.put("admin_email", adminEmail);

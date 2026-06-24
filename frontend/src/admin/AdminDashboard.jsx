@@ -271,7 +271,7 @@ export default function AdminDashboard() {
       return [
         o.id,
         o.tableNumber,
-        `$${o.totalPrice.toFixed(2)}`,
+        `₹${o.totalPrice.toFixed(2)}`,
         o.status,
         o.paymentMethod,
         o.paymentStatus,
@@ -330,14 +330,14 @@ export default function AdminDashboard() {
         const dateStr = o.createdAt ? parseBackendDate(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "";
         const idPad = `#${o.id}`.padEnd(8);
         const tablePad = `T${o.tableNumber}`.padEnd(8);
-        const pricePad = `$${o.totalPrice.toFixed(2)}`.padEnd(9);
+        const pricePad = `₹${o.totalPrice.toFixed(2)}`.padEnd(9);
         const statusPad = o.status.padEnd(10);
         const payPad = o.paymentStatus.padEnd(10);
         summary += `${idPad} | ${tablePad} | ${pricePad} | ${statusPad} | ${payPad} | ${dateStr}\n`;
       });
       summary += "=========================================================\n";
       summary += `Total Orders: ${weeklyOrders.length}\n`;
-      summary += `Total Settled Revenue: $${totalRevenue.toFixed(2)}\n`;
+      summary += `Total Settled Revenue: ₹${totalRevenue.toFixed(2)}\n`;
 
       const emailPayload = {
         service_id: emailjs_service_id,
@@ -346,7 +346,7 @@ export default function AdminDashboard() {
         template_params: {
           order_id: `Weekly Report (${new Date().toLocaleDateString()})`,
           table_number: "Weekly Report",
-          total_price: `$${totalRevenue.toFixed(2)}`,
+          total_price: `₹${totalRevenue.toFixed(2)}`,
           payment_method: "Weekly Summary Report",
           items_summary: summary,
           admin_email: admin_email || "admin@smartcafe.com",
@@ -574,7 +574,7 @@ export default function AdminDashboard() {
         template_params: {
           order_id: 0,
           table_number: 0,
-          total_price: '$0.00',
+          total_price: '₹0.00',
           payment_method: 'TEST_CONNECTION',
           items_summary: 'Test Email Notification from The Hub Admin Console',
           admin_email: admin_email || 'admin@smartcafe.com',
@@ -750,7 +750,7 @@ export default function AdminDashboard() {
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    { label: 'Total Revenue', value: `$${overviewMetrics.totalRevenue.toFixed(2)}`, icon: TrendingUp, color: 'text-green-500 bg-green-500/10' },
+                    { label: 'Total Revenue', value: `₹${overviewMetrics.totalRevenue.toFixed(2)}`, icon: TrendingUp, color: 'text-green-500 bg-green-500/10' },
                     { label: 'Total Orders', value: overviewMetrics.totalOrders, icon: ShoppingCart, color: 'text-blue-500 bg-blue-500/10' },
                     { label: 'Pending Orders', value: overviewMetrics.pendingOrders, icon: Clock, color: 'text-yellow-500 bg-yellow-500/10' },
                     { label: 'Completed Orders', value: overviewMetrics.completedOrders, icon: CheckCircle2, color: 'text-green-600 bg-green-600/10' }
@@ -794,7 +794,7 @@ export default function AdminDashboard() {
                                 <td className="py-3.5 font-bold dark:text-white">#{ord.id}</td>
                                 <td className="py-3.5">Table {ord.tableNumber}</td>
                                 <td className="py-3.5">
-                                  <div className="font-bold text-gray-800 dark:text-white">${ord.totalPrice.toFixed(2)}</div>
+                                  <div className="font-bold text-gray-800 dark:text-white">₹{ord.totalPrice.toFixed(2)}</div>
                                   <div className="text-[9px] text-cafe-darkgold dark:text-cafe-gold font-bold mt-0.5">{ord.paymentMethod}</div>
                                 </td>
                                 <td className="py-3.5">
@@ -937,7 +937,7 @@ export default function AdminDashboard() {
                             {ord.orderItems && ord.orderItems.map((item) => (
                               <div key={item.id} className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
                                 <span>x{item.quantity} {item.menuItem?.name}</span>
-                                <span>${(item.priceAtOrder * item.quantity).toFixed(2)}</span>
+                                <span>₹{(item.priceAtOrder * item.quantity).toFixed(2)}</span>
                               </div>
                             ))}
                           </div>
@@ -947,7 +947,7 @@ export default function AdminDashboard() {
                         <div className="border-t border-gray-100 dark:border-cafe-wood/20 pt-3 mt-3 space-y-3.5">
                           <div className="flex justify-between items-start">
                             <div>
-                              <div className="text-xs text-gray-400 font-light">Total: <strong className="text-gray-800 dark:text-white">${ord.totalPrice.toFixed(2)}</strong></div>
+                              <div className="text-xs text-gray-400 font-light">Total: <strong className="text-gray-800 dark:text-white">₹{ord.totalPrice.toFixed(2)}</strong></div>
                               <div className="text-[10px] text-cafe-darkgold dark:text-cafe-gold font-bold mt-1">{ord.paymentMethod}</div>
                             </div>
                             
@@ -1049,7 +1049,7 @@ export default function AdminDashboard() {
                           <div>
                             <div className="flex justify-between items-start">
                               <h4 className="font-serif font-bold text-base text-gray-800 dark:text-white">{item.name}</h4>
-                              <span className="font-bold text-cafe-wood dark:text-cafe-gold">${item.price.toFixed(2)}</span>
+                              <span className="font-bold text-cafe-wood dark:text-cafe-gold">₹{item.price.toFixed(2)}</span>
                             </div>
                             <p className="text-xs text-gray-400 dark:text-gray-500 line-clamp-2 mt-1 font-light">{item.description}</p>
                           </div>
@@ -1197,7 +1197,7 @@ export default function AdminDashboard() {
                             <XAxis dataKey="date" stroke="#888" fontSize={10} tickFormatter={(str) => str ? str.split('T')[0] : ''} />
                             <YAxis stroke="#888" fontSize={10} />
                             <Tooltip contentStyle={{ background: darkMode ? '#1A1613' : '#FFF', borderColor: '#C5A880', fontSize: 11 }} />
-                            <Line type="monotone" dataKey="totalSales" name="Sales ($)" stroke="#A37F55" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                            <Line type="monotone" dataKey="totalSales" name="Sales (₹)" stroke="#A37F55" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       )}
@@ -1623,7 +1623,7 @@ export default function AdminDashboard() {
               {/* Price & Prep time */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-gray-400 block mb-1">Price ($)</label>
+                  <label className="text-gray-400 block mb-1">Price (₹)</label>
                   <input
                     type="number"
                     step="0.01"

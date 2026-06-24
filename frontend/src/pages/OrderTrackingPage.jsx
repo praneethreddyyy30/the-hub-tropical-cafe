@@ -383,7 +383,7 @@ export default function OrderTrackingPage() {
                       </div>
                       
                       <div className="text-right flex flex-col items-end gap-1.5">
-                        <span className="text-xs font-bold text-gray-800 dark:text-white">${ord.totalPrice.toFixed(2)}</span>
+                        <span className="text-xs font-bold text-gray-800 dark:text-white">₹{ord.totalPrice.toFixed(2)}</span>
                         <button
                           onClick={() => navigate(`/track?orderId=${ord.id}`)}
                           className="px-2.5 py-1 border border-cafe-gold/25 text-cafe-darkgold dark:text-cafe-gold hover:bg-cafe-gold/10 rounded-lg text-[10px] font-bold transition"
@@ -521,7 +521,7 @@ export default function OrderTrackingPage() {
 
             <div className="text-[10px] text-gray-500 dark:text-gray-400 flex flex-col items-center gap-1">
               <span>UPI ID: <strong className="font-semibold select-all font-mono text-cafe-darkgold dark:text-cafe-gold">{publicSettings?.upi_id || 'smartcafe@ybl'}</strong></span>
-              <span>Amount: <strong className="font-semibold text-gray-800 dark:text-white">${order.totalPrice.toFixed(2)}</strong></span>
+              <span>Amount: <strong className="font-semibold text-gray-800 dark:text-white">₹{order.totalPrice.toFixed(2)}</strong></span>
             </div>
 
             <button
@@ -669,7 +669,7 @@ export default function OrderTrackingPage() {
                     </span>
                     <span className="text-gray-800 dark:text-gray-200">{item.menuItem?.name}</span>
                   </div>
-                  <span className="font-normal text-gray-800 dark:text-white">${(item.priceAtOrder * item.quantity).toFixed(2)}</span>
+                  <span className="font-normal text-gray-800 dark:text-white">₹{(item.priceAtOrder * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -679,26 +679,26 @@ export default function OrderTrackingPage() {
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span className="text-gray-800 dark:text-gray-200">
-                  ${(order.totalPrice - (order.totalPrice * 0.05) - 1.00 > 0 
-                     ? (order.totalPrice - 1.00) / 1.05 
+                  ₹{(order.totalPrice - (order.totalPrice * 0.05) - 10.00 > 0 
+                     ? (order.totalPrice - 10.00) / 1.05 
                      : order.totalPrice).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>VAT & Taxes (5%)</span>
                 <span className="text-gray-800 dark:text-gray-200">
-                  ${(order.totalPrice - (order.totalPrice * 0.05) - 1.00 > 0 
-                     ? ((order.totalPrice - 1.00) / 1.05) * 0.05 
+                  ₹{(order.totalPrice - (order.totalPrice * 0.05) - 10.00 > 0 
+                     ? ((order.totalPrice - 10.00) / 1.05) * 0.05 
                      : 0.0).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Service Fee</span>
-                <span className="text-gray-800 dark:text-gray-200">$1.00</span>
+                <span className="text-gray-800 dark:text-gray-200">₹10.00</span>
               </div>
               <div className="flex justify-between text-sm font-bold text-gray-800 dark:text-white pt-2">
                 <span>Grand Total</span>
-                <span>${order.totalPrice.toFixed(2)}</span>
+                <span>₹{order.totalPrice.toFixed(2)}</span>
               </div>
             </div>
 

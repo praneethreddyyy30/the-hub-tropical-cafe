@@ -369,7 +369,7 @@ export default function MenuPage() {
                       {item.name}
                     </h3>
                     <span className="text-lg font-bold text-cafe-wood dark:text-cafe-gold whitespace-nowrap">
-                      ${item.price.toFixed(2)}
+                      ₹{item.price.toFixed(2)}
                     </span>
                   </div>
                   <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 mb-4 font-light">
@@ -466,7 +466,7 @@ export default function MenuPage() {
               {cartCount}
             </span>
           </div>
-          <span className="font-bold">${cartTotal.toFixed(2)}</span>
+          <span className="font-bold">₹{cartTotal.toFixed(2)}</span>
         </button>
       )}
 
@@ -513,7 +513,7 @@ export default function MenuPage() {
                           </button>
                         </div>
                         <p className="text-xs text-cafe-darkgold dark:text-cafe-gold font-semibold mb-2">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toFixed(2)}
                         </p>
                         <div className="flex items-center gap-2">
                           <button 
@@ -542,20 +542,20 @@ export default function MenuPage() {
                   <div className="space-y-1.5 text-sm font-light text-gray-500 dark:text-gray-400">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span className="font-normal text-gray-800 dark:text-white">${cartTotal.toFixed(2)}</span>
+                      <span className="font-normal text-gray-800 dark:text-white">₹{cartTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Taxes & VAT (5%)</span>
-                      <span className="font-normal text-gray-800 dark:text-white">${(cartTotal * 0.05).toFixed(2)}</span>
+                      <span className="font-normal text-gray-800 dark:text-white">₹{(cartTotal * 0.05).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Service Charge</span>
-                      <span className="font-normal text-gray-800 dark:text-white">$1.00</span>
+                      <span className="font-normal text-gray-800 dark:text-white">₹10.00</span>
                     </div>
                     <hr className="my-2 border-gray-200 dark:border-cafe-wood/20" />
                     <div className="flex justify-between text-base font-bold text-gray-800 dark:text-white">
                       <span>Grand Total</span>
-                      <span>${(cartTotal + (cartTotal * 0.05) + 1.00).toFixed(2)}</span>
+                      <span>₹{(cartTotal + (cartTotal * 0.05) + 10.00).toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -673,7 +673,7 @@ export default function MenuPage() {
             <div className="w-40 h-40 bg-white p-2 rounded-xl border border-gray-150 flex items-center justify-center mx-auto mb-4 shadow-inner">
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
-                  `upi://pay?pa=${publicSettings?.upi_id || 'smartcafe@ybl'}&pn=SmartCafe&am=${(cartTotal + (cartTotal * 0.05) + 1.00).toFixed(2)}&cu=INR`
+                  `upi://pay?pa=${publicSettings?.upi_id || 'smartcafe@ybl'}&pn=SmartCafe&am=${(cartTotal + (cartTotal * 0.05) + 10.00).toFixed(2)}&cu=INR`
                 )}`} 
                 alt="UPI Payment QR" 
                 className="w-full h-full object-contain"
@@ -683,7 +683,7 @@ export default function MenuPage() {
             <div className="bg-gray-50 dark:bg-cafe-chocolate/10 border dark:border-cafe-wood/20 p-3 rounded-xl mb-4 text-left text-xs space-y-1.5 text-gray-500 dark:text-gray-400">
               <div className="flex justify-between">
                 <span>Amount to Pay</span>
-                <span className="font-bold text-gray-800 dark:text-white">${(cartTotal + (cartTotal * 0.05) + 1.00).toFixed(2)}</span>
+                <span className="font-bold text-gray-800 dark:text-white">₹{(cartTotal + (cartTotal * 0.05) + 10.00).toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>UPI ID</span>
